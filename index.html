@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Absen Digital Kamera</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg,#4facfe,#00f2fe);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      width: 90%;
+      max-width: 360px;
+      padding: 20px;
+      border-radius: 15px;
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      background: #4facfe;
+      color: white;
+    }
+    video {
+      width: 100%;
+      border-radius: 12px;
+      display: none;
+    }
+    #preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 10px auto;
+      display: none;
+      border: 3px solid #4facfe;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      background: #f2f2f2;
+      margin: 5px 0;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Absen Digital</h2>
+
+  <input type="text" id="nama" placeholder="Masukkan Nama">
+
+  <button onclick="bukaKamera()">📷 Buka Kamera</button>
+
+  <video id="video" autoplay playsinline></video>
+  <button onclick="ambilFoto()">📸 Ambil Foto</button>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="preview">
+
+  <button onclick="absen()">Absen Sekarang</button>
+
+  <ul id="riwayat"></ul>
+</div>
+
+<script>
+let stream = null;
+
+function bukaKamera() {
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(s => {
+      stream = s;
+      const video = document.getElementById("video");
+      video.srcObject = stream;
+      video.style.display = "block";
+    })
+    .catch(() => alert("Izin kamera ditolak"));
+}
+
+function ambilFoto() {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const preview = document.getElementById("preview");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  preview.src = canvas.toDataURL("image/png");
+  preview.style.display = "block";
+
+  stream.getTracks().forEach(track => track.stop());
+  video.style.display = "none";
+}
+
+function absen() {
+  const nama = document.getElementById("nama").value;
+  const foto = document.getElementById("preview").src;
+  if (!nama || !foto) {
+    alert("Nama & foto wajib");
+    return;
+  }
+
+  const waktu = new Date().toLocaleString();
+  const data = nama + " - " + waktu;
+
+  let riwayat = JSON.parse(localStorage.getItem("absen")) || [];
+  riwayat.push(data);
+  localStorage.setItem("absen", JSON.stringify(riwayat));
+
+  tampilRiwayat();
+}
+
+function tampilRiwayat() {
+  const ul = document.getElementById("riwayat");
+  ul.innerHTML = "";
+  const data = JSON.parse(localStorage.getItem("absen")) || [];
+  data.forEach(d => {
+    const li = document.createElement("li");
+    li.innerText = d;
+    ul.appendChild(li);
+  });
+}
+</script>
+
+</body>
+</html>
